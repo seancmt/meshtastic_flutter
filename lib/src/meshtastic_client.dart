@@ -336,11 +336,13 @@ class MeshtasticClient {
   }
 
   /// Send raw data on a custom port (e.g., PRIVATE_APP) — not intercepted by firmware modules
+  /// No isConnected/isConfigured checks — just try to write. If BLE is down,
+  /// the write throws a platform exception which the caller handles.
   Future<void> sendData(
     List<int> payload, {
     int portnum = 256, // PRIVATE_APP
   }) async {
-    if (!isConnected) {
+    if (_toRadioChar == null) {
       throw const ConnectionException('Not connected to a device');
     }
 
