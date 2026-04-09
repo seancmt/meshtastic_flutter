@@ -10,6 +10,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../generated/mesh.pb.dart';
 import '../generated/config.pb.dart';
 import '../generated/module_config.pb.dart';
+import '../generated/admin.pb.dart';
 import '../generated/channel.pb.dart';
 import '../generated/portnums.pb.dart';
 import 'models/connection_state.dart';
@@ -373,6 +374,32 @@ class MeshtasticClient {
     _logger.info(
       'Sending position: lat=$latitude, lon=$longitude, alt=$altitude',
     );
+    await _sendPacket(packet);
+  }
+
+  /// Send an admin config message to the device (e.g., to disable device GPS)
+  Future<void> sendAdminConfig(Config config) async {
+    if (!isConnected) {
+      throw const ConnectionException('Not connected to a device');
+    }
+
+    final adminMessage = AdminMessage(setConfig: config);
+    final packetId = DateTime.now().millisecondsSinceEpoch & 0xFFFFFFFF;
+
+    final packet = MeshPacket(
+      from: _myNodeInfo?.myNodeNum ?? 0,
+      to: _myNodeInfo?.myNodeNum ?? 0, // Send to self (local device)
+      id: packetId,
+      decoded: Data(
+        portnum: PortNum.ADMIN_APP,
+        payload: adminMessage.writeToBuffer(),
+        wantResponse: true,
+      ),
+      hopLimit: 0, // Local only
+      priority: MeshPacket_Priority.RELIABLE,
+    );
+
+    _logger.info('Sending admin config');
     await _sendPacket(packet);
   }
 
