@@ -342,7 +342,10 @@ class MeshtasticClient {
     List<int> payload, {
     int portnum = 256, // PRIVATE_APP
   }) async {
-    if (_toRadioChar == null) return; // Not ready yet — skip silently
+    if (_toRadioChar == null) {
+      print('🔴 MESH sendData: _toRadioChar is null — SKIPPING');
+      return;
+    }
 
     final packetId = DateTime.now().millisecondsSinceEpoch & 0xFFFFFFFF;
 
@@ -357,8 +360,9 @@ class MeshtasticClient {
       priority: MeshPacket_Priority.RELIABLE,
     );
 
-    _logger.info('Sending custom data: ${payload.length} bytes on port $portnum');
+    print('🟢 MESH sendData: writing ${payload.length} bytes to BLE');
     await _sendPacket(packet);
+    print('🟢 MESH sendData: write SUCCESS');
   }
 
   /// Send a position update
