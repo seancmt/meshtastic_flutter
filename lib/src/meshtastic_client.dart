@@ -335,8 +335,33 @@ class MeshtasticClient {
     await _sendPacket(packet);
   }
 
+  /// Send raw data on a custom port (e.g., PRIVATE_APP) — not intercepted by firmware modules
+  Future<void> sendData(
+    List<int> payload, {
+    int portnum = 256, // PRIVATE_APP
+  }) async {
+    if (!isConnected) {
+      throw const ConnectionException('Not connected to a device');
+    }
+
+    final packetId = DateTime.now().millisecondsSinceEpoch & 0xFFFFFFFF;
+
+    final packet = MeshPacket(
+      to: 0xFFFFFFFF, // Broadcast
+      id: packetId,
+      decoded: Data(
+        portnum: PortNum.valueOf(portnum) ?? PortNum.PRIVATE_APP,
+        payload: payload,
+      ),
+      hopLimit: 3,
+      priority: MeshPacket_Priority.RELIABLE,
+    );
+
+    _logger.info('Sending custom data: ${payload.length} bytes on port $portnum');
+    await _sendPacket(packet);
+  }
+
   /// Send a position update
-  Future<void> sendPosition(
     double latitude,
     double longitude, {
     int? altitude,
