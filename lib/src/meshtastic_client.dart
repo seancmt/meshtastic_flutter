@@ -362,6 +362,7 @@ class MeshtasticClient {
   }
 
   /// Send a position update
+  Future<void> sendPosition(
     double latitude,
     double longitude, {
     int? altitude,
