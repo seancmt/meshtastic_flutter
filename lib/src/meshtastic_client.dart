@@ -103,14 +103,8 @@ class MeshtasticClient {
 
   /// Request necessary permissions for BLE
   Future<void> _requestPermissions() async {
-    // Bluetooth permission is required on all platforms
-    final bluetoothStatus = await Permission.bluetooth.request();
-    if (!bluetoothStatus.isGranted) {
-      throw const PermissionException('Permission denied: Permission.bluetooth');
-    }
-
-    // bluetoothConnect and bluetoothScan are Android-only (API 31+)
     if (!kIsWeb && Platform.isAndroid) {
+      // Android 12+ (API 31+): use specific BLE permissions, not legacy Permission.bluetooth
       final connectStatus = await Permission.bluetoothConnect.request();
       if (!connectStatus.isGranted) {
         throw const PermissionException('Permission denied: Permission.bluetoothConnect');
@@ -118,6 +112,12 @@ class MeshtasticClient {
       final scanStatus = await Permission.bluetoothScan.request();
       if (!scanStatus.isGranted) {
         throw const PermissionException('Permission denied: Permission.bluetoothScan');
+      }
+    } else if (!kIsWeb && Platform.isIOS) {
+      // iOS: Permission.bluetooth maps to CBManagerAuthorization
+      final bluetoothStatus = await Permission.bluetooth.request();
+      if (!bluetoothStatus.isGranted) {
+        throw const PermissionException('Permission denied: Permission.bluetooth');
       }
     }
 
