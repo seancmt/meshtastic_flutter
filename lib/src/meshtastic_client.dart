@@ -421,13 +421,11 @@ class MeshtasticClient {
       'id=${packet.id}, portnum=${packet.decoded.portnum}, size=${data.length} bytes',
     );
 
-    // Check if characteristic supports write without response
-    final supportsWriteWithoutResponse =
-        _toRadioChar!.properties.writeWithoutResponse;
-
+    // Always write WITH response — write-without-response can silently drop packets.
+    // The official Python library uses response=True for all ToRadio writes.
     await _toRadioChar!.write(
       data,
-      withoutResponse: supportsWriteWithoutResponse,
+      withoutResponse: false,
     );
 
     _logger.fine('Packet sent successfully');
@@ -438,13 +436,12 @@ class MeshtasticClient {
     _logger.info('Starting configuration process');
 
     // Send wantConfigId to start configuration download
-    final wantConfig = ToRadio(wantConfigId: 0);
-    // Check if characteristic supports write without response
-    final supportsWriteWithoutResponse =
-        _toRadioChar!.properties.writeWithoutResponse;
+    // Use a non-zero random ID — firmware sends back matching configCompleteId
+    final configId = DateTime.now().millisecondsSinceEpoch & 0xFFFFFFFF;
+    final wantConfig = ToRadio(wantConfigId: configId);
     await _toRadioChar!.write(
       wantConfig.writeToBuffer(),
-      withoutResponse: supportsWriteWithoutResponse,
+      withoutResponse: false,
     );
 
     // Start reading configuration data
