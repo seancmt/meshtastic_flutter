@@ -468,6 +468,10 @@ class MeshtasticClient {
         await Future.delayed(const Duration(milliseconds: 50));
       } catch (e) {
         _logger.warning('Error reading configuration: $e');
+        // Mark config as complete anyway — BLE is connected, services discovered,
+        // notifications enabled. Config read errors shouldn't block packet sending.
+        _configComplete = true;
+        _emitConnectionState(MeshtasticConnectionState.connected);
         break;
       }
     }
