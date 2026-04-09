@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -102,18 +103,27 @@ class MeshtasticClient {
 
   /// Request necessary permissions for BLE
   Future<void> _requestPermissions() async {
-    final permissions = [
-      Permission.bluetooth,
-      Permission.bluetoothConnect,
-      Permission.bluetoothScan,
-      Permission.locationWhenInUse,
-    ];
+    // Bluetooth permission is required on all platforms
+    final bluetoothStatus = await Permission.bluetooth.request();
+    if (!bluetoothStatus.isGranted) {
+      throw const PermissionException('Permission denied: Permission.bluetooth');
+    }
 
-    for (final permission in permissions) {
-      final status = await permission.request();
-      if (!status.isGranted) {
-        throw PermissionException('Permission denied: $permission');
+    // bluetoothConnect and bluetoothScan are Android-only (API 31+)
+    if (!kIsWeb && Platform.isAndroid) {
+      final connectStatus = await Permission.bluetoothConnect.request();
+      if (!connectStatus.isGranted) {
+        throw const PermissionException('Permission denied: Permission.bluetoothConnect');
       }
+      final scanStatus = await Permission.bluetoothScan.request();
+      if (!scanStatus.isGranted) {
+        throw const PermissionException('Permission denied: Permission.bluetoothScan');
+      }
+    }
+
+    final locationStatus = await Permission.locationWhenInUse.request();
+    if (!locationStatus.isGranted) {
+      throw const PermissionException('Permission denied: Permission.locationWhenInUse');
     }
   }
 
@@ -229,8 +239,10 @@ class MeshtasticClient {
         'notify=${_fromNumChar!.properties.notify}',
       );
 
-      // Set MTU to 512
-      await device.requestMtu(512);
+      // Set MTU to 512 (Android only — iOS negotiates MTU automatically)
+      if (!kIsWeb && Platform.isAndroid) {
+        await device.requestMtu(512);
+      }
 
       // Enable notifications on FromNum
       await _fromNumChar!.setNotifyValue(true);
