@@ -226,6 +226,8 @@ class MeshtasticClient {
             throw const ConnectionException('FromNum characteristic not found'),
       );
 
+      print('🔧 connectToDevice: _toRadioChar SET = ${_toRadioChar != null}');
+
       // Log characteristic properties for debugging
       _logger.info(
         'ToRadio properties: write=${_toRadioChar!.properties.write}, '
@@ -256,6 +258,7 @@ class MeshtasticClient {
       // Start configuration process
       await _startConfiguration();
 
+      print('🔧 connectToDevice: DONE. _toRadioChar=${_toRadioChar != null}, _configComplete=$_configComplete');
       _logger.info('Successfully connected to device');
     } catch (e) {
       _logger.severe('Failed to connect to device: $e');
