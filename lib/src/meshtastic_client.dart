@@ -226,8 +226,6 @@ class MeshtasticClient {
             throw const ConnectionException('FromNum characteristic not found'),
       );
 
-      print('🔧 connectToDevice: _toRadioChar SET = ${_toRadioChar != null}');
-
       // Log characteristic properties for debugging
       _logger.info(
         'ToRadio properties: write=${_toRadioChar!.properties.write}, '
@@ -258,7 +256,6 @@ class MeshtasticClient {
       // Start configuration process
       await _startConfiguration();
 
-      print('🔧 connectToDevice: DONE. _toRadioChar=${_toRadioChar != null}, _configComplete=$_configComplete');
       _logger.info('Successfully connected to device');
     } catch (e) {
       _logger.severe('Failed to connect to device: $e');
@@ -345,10 +342,7 @@ class MeshtasticClient {
     List<int> payload, {
     int portnum = 256, // PRIVATE_APP
   }) async {
-    if (_toRadioChar == null) {
-      print('🔴 MESH sendData: _toRadioChar is null — SKIPPING');
-      return;
-    }
+    if (_toRadioChar == null) return; // Not ready — skip silently
 
     final packetId = DateTime.now().millisecondsSinceEpoch & 0xFFFFFFFF;
 
@@ -363,9 +357,8 @@ class MeshtasticClient {
       priority: MeshPacket_Priority.RELIABLE,
     );
 
-    print('🟢 MESH sendData: writing ${payload.length} bytes to BLE');
+    _logger.info('Sending custom data: ${payload.length} bytes on port $portnum');
     await _sendPacket(packet);
-    print('🟢 MESH sendData: write SUCCESS');
   }
 
   /// Send a position update
